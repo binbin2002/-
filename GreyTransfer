@@ -1,0 +1,47 @@
+void GreyTransfer()//灰度线性变换
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\ik_beijing_c.bmp";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open file error";
+    }
+    int channel = M.channels();
+    int rows = M.rows;
+    int cols = M.cols;
+    double k, b;
+    cout << "输入变化系数 k,b";
+    cin >> k >> b;//灰度变化系数
+    imshow("原始图像", M);
+    Mat impGray(rows, cols, CV_8UC1);
+    if (channel == 3)
+    {
+        impGray = ToGrey(M).clone();
+        imshow("灰度图像", impGray);
+    }
+    if (channel == 1)
+    {
+        impGray = M.clone();
+    }
+    Mat imgRes;
+    imgRes.create(rows, cols, CV_8UC1);
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if ((k * impGray.at<uchar>(i, j) + b) > 0 && (k * impGray.at<uchar>(i, j) + b) < 255)//判断灰度变换后是否超过灰度范围
+            {
+                imgRes.at<uchar>(i, j) = k * impGray.at<uchar>(i, j) + b;
+            }
+            else
+            {
+                imgRes.at<uchar>(i, j) = 0;
+            }
+
+        }
+    }
+    namedWindow("灰度线性变换图像");
+    imshow("灰度线性变换图像", imgRes);
+    waitKey(0);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\灰度变化后.bmp", imgRes);
+}
