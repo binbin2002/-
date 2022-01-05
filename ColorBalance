@@ -1,0 +1,65 @@
+void  ColorBalance()
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\landsat8\\20180620-tianjin.bmp";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open file error";
+    }
+    imshow("原始图像", M);
+    int channel = M.channels();
+    int rows = M.rows;
+    int cols = M.cols;
+    Mat mt(rows, cols, CV_8UC1);
+    double Ysum = 0, Ymax = 0,Yaver=0;//亮度和，亮度最大值，平均亮度
+   double SumR=0, SumG=0, SumB=0;//灰色点集中R,G,B分别的和
+   double AverR = 0,AverG = 0, AverB = 0;//灰色点集中R,G,B分别的平均值
+    for (int i = 0; i < M.rows; i++)
+    {
+        for (int j = 0; j < M.cols; j++)
+        {
+           mt.at<uchar>(i,j) = M.at<Vec3b>(i, j)[0] * 0.229 + M.at<Vec3b>(i, j)[1] * 0.587 + M.at<Vec3b>(i, j)[2] * 0.114;//利用公式将彩色图像转化为灰度图像
+           Ysum += mt.at<uchar>(i, j);
+           if (mt.at<uchar>(i, j) >Ymax)
+           {
+               Ymax = mt.at<uchar>(i, j);
+           }
+        }
+    }
+    Yaver = Ysum / (rows * cols) ;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if (mt.at<uchar>(i,j)<0.95 * Ymax)//灰度
+            {
+                SumB += M.at<Vec3b>(i, j)[0];
+                SumG += M.at<Vec3b>(i, j)[1];
+                SumR += M.at<Vec3b>(i, j)[2];
+            }
+        }
+    }
+    AverB = SumB / (rows * cols) ;
+    AverG = SumG / (rows * cols) ;
+    AverR = SumR / (rows * cols) ;
+   double Bmax = max(AverB, AverG);
+   Bmax = max(Bmax, AverR);//最大的Bmax;
+   //彩色平衡系数
+    double  KR = Bmax / AverR;
+    double KG = Bmax / AverG;
+    double KB = Bmax / AverB;
+    Mat Ms(rows, cols, CV_8UC3);
+    for (int i = 0; i <rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            Ms.at<Vec3b>(i, j)[0] = KB * M.at<Vec3b>(i, j)[0];
+            Ms.at<Vec3b>(i, j)[1] = KB * M.at<Vec3b>(i, j)[1];
+            Ms.at<Vec3b>(i, j)[1] = KB * M.at<Vec3b>(i, j)[1];
+        }
+    }
+    imshow("色彩平衡后图像", Ms);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\色彩平衡后.bmp", Ms);
+    waitKey();
+   
+}
