@@ -1,0 +1,20 @@
+///将彩色图像转换成灰度图像返回
+Mat ToGrey(Mat& M)//将一副彩色图像转换成灰度图像
+{
+    int channel = M.channels();
+    Mat imp(M.rows, M.cols, CV_8UC1);
+    if (channel == 3)//通道为3将彩色转换成灰度
+    {
+        for (int i = 0; i < M.rows; i++)
+        {
+            for (int j = 0; j < M.cols; j++)
+            {
+                imp.at<uchar>(i, j) = M.at<Vec3b>(i, j)[0] * 0.229 + M.at<Vec3b>(i, j)[1] * 0.587 + M.at<Vec3b>(i, j)[2] * 0.114;//利用公式将彩色图像转化为灰度图像
+            }
+        }
+    }
+    return imp;
+    if (channel == 1)//为灰度图则直接返回
+    {
+        return M;
+    }
