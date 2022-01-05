@@ -1,0 +1,99 @@
+void BinaryReact()
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\landsat8\\123.png";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open file error";
+    }
+    imshow("原始图像", M);
+    int channel = M.channels(); 
+    int rows = M.rows;
+    int cols = M.cols;
+    Mat impGray(rows, cols, CV_8UC1);
+    if (channel == 3)
+    {
+        impGray = ToGrey(M).clone();
+        imshow("灰度图像", impGray);
+    }
+    if (channel == 1)
+    {
+        impGray = M.clone();
+    }
+    imshow("灰度图像", impGray);
+    int t = OSTu(impGray);//得到阈值
+    Mat Mq(rows, cols, CV_8UC1);
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+            if (impGray.at<uchar>(i, j) <= t)
+                Mq.at<uchar>(i, j) =0;
+            else
+                Mq.at<uchar>(i, j) = 255;
+    }
+    imshow("判断分析法后图像", Mq);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\判断分析法后二值化.png", Mq);
+    waitKey();
+}
+int OSTu(Mat& src)
+{
+    double nCountPix[256] = { 0 };//数量
+    double nProPix[256] = { 0 };//概率
+    for (int i = 0; i < src.rows; i++)
+    {
+        for (int j = 0; j < src.cols; j++)
+        {
+            nCountPix[src.at<uchar>(i, j)]++;
+        }
+    }//统一每个灰度级的个数
+    for (int i = 0; i < 256; i++)
+    {
+        nProPix[i] = nCountPix[i] / (src.rows * src.cols);
+    }//计算每个灰度级的概率
+    int threshhold = 0;//设置初始二值化阈值为零
+    double varmax = 0;//设置组间方差除以组内方差最大初始值为零
+    for (int i = 0; i < 256; i++)//i为遍历的试探阈值
+    {
+        //----数量count、灰度均值p、灰度概率pr,平均灰度average、组内方差varw,组间方差varb,组间方差除以组内方差var---//
+        double c0 = 0, c1 = 0, p0 = 0, p1 = 0, pr0 = 0, pr1 = 0, a0 = 0, a1 = 0, var = 0, varb = 0, varw = 0;
+        //一组方差var0，二组方差var1
+        double var0 = 0, var1 = 0;
+        for (int j = 0; j < 256; j++)
+        {
+            if (i > j)//背景
+            {
+                c0 += nCountPix[j];//总数量
+                p0 += j * nProPix[j];//总灰度均值
+                pr0 += nProPix[j];//灰度概率
+            }
+            if (i < j)//前景
+            {
+                c1 += nCountPix[j];//总数量
+                p1 += j * nProPix[j];//总灰度均值
+                pr1 += nProPix[j];//灰度概率
+            }
+        }
+        a0 = p0 / pr0;//平均灰度
+        a1 = p1 / pr1;
+        for (int j = 0; j < 256; j++)
+        {
+            if (i > j)//背景
+            {
+                var0 += (j - a0) * (j - a0) * nCountPix[j] / c0;//计算背景区域方差
+            }
+            if (i < j)//前景
+            {
+                var1 += (j - a1) * (j - a1) * nCountPix[j] / c1;//计算背景区域方差
+            }
+        }
+        varw = c0 * var0 + c1 * var1;
+        varb = c0 * c1 * (a0 - a1) * (a0 - a1);
+        var = varb / varw;
+        if (var > varmax)
+        {
+            varmax = var;
+            threshhold = i;
+        }
+    }
+    return threshhold;
+}
