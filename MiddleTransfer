@@ -1,0 +1,148 @@
+void MiddleTransfer()//中值滤波
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\landsat8\\1.png";
+    Mat M = imread(imageName, IMREAD_GRAYSCALE);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open bmp error";
+    }
+    int height = M.rows;
+    int width = M.cols;
+    imshow("原图", M);
+    //中值滤波
+    Mat Ma;
+    Ma.create(height, width, CV_8UC1);
+    uchar A[9];//接受模板内9个值
+    for (int i = 1; i < height - 1; i++)
+    {
+        for (int j = 1; j < width - 1; j++)
+        {
+            A[0] = M.at<uchar>(i - 1, j - 1); A[1] = M.at<uchar>(i - 1, j); A[2] = M.at<uchar>(i - 1, j + 1);
+            A[3] = M.at<uchar>(i, j - 1); A[4] = M.at<uchar>(i, j); A[5] = M.at<uchar>(i, j + 1);
+            A[6] = M.at<uchar>(i + 1, j - 1); A[7] = M.at<uchar>(i + 1, j); A[8] = M.at<uchar>(i + 1, j + 1);
+            for (int k = 0; k < 9; k++)//对模板内灰度值进行排序
+            {
+                for (int m = k; m < 9; m++)
+                {
+                    if (A[k] > A[m])
+                    {
+                        uchar a = A[k];
+                        A[k] = A[m];
+                        A[m] = a;
+                    }
+                }
+            }
+            Ma.at<uchar>(i, j) = A[4];//将排序后中数赋给中心点
+        }
+    }
+    imshow("中值滤波", Ma);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\1test.png", Ma);
+    waitKey();
+}
+void AreaTransfer()//局部变化（高低通）
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\landsat8\\subset-pan-byte-594-430.bmp";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open bmp error";
+        exit(0);
+    }
+    int height = M.rows;
+    int width = M.cols;
+    imshow("原图", M);
+    // //高通滤波
+    Mat Mt = Mat::zeros(height, width, CV_8UC3);
+    for (int i = 1; i < height - 1; i++)
+    {
+        for (int j = 1; j < width - 1; j++)
+        {
+            //用拉普拉斯增强算子处理灰度
+            Mt.at<Vec3b>(i, j)[0] = M.at<Vec3b>(i, j)[0] * 5 - M.at<Vec3b>(i - 1, j)[0] - M.at<Vec3b>(i + 1, j)[0] - M.at<Vec3b>(i, j - 1)[0] - M.at<Vec3b>(i, j + 1)[0];
+            Mt.at<Vec3b>(i, j)[1] = M.at<Vec3b>(i, j)[1] * 5 - M.at<Vec3b>(i - 1, j)[1] - M.at<Vec3b>(i + 1, j)[1] - M.at<Vec3b>(i, j - 1)[1] - M.at<Vec3b>(i, j + 1)[1];
+            Mt.at<Vec3b>(i, j)[2] = M.at<Vec3b>(i, j)[2] * 5 - M.at<Vec3b>(i - 1, j)[2] - M.at<Vec3b>(i + 1, j)[2] - M.at<Vec3b>(i, j - 1)[2] - M.at<Vec3b>(i, j + 1)[2];
+            //判断滤波后有无超过灰度阈值
+            if (Mt.at<Vec3b>(i,j)[0]>255|| Mt.at<Vec3b>(i, j)[0] <0)
+            {
+                Mt.at<Vec3b>(i, j)[0] = 0;
+            }
+            if (Mt.at<Vec3b>(i, j)[1] > 255 || Mt.at<Vec3b>(i, j)[1] < 0)
+            {
+                Mt.at<Vec3b>(i, j)[1] = 0;
+            }
+            if (Mt.at<Vec3b>(i, j)[2] > 255 || Mt.at<Vec3b>(i, j)[2] < 0)
+            {
+                Mt.at<Vec3b>(i, j)[2] = 0;
+            }
+        }
+    }
+    imshow("高通滤波", Mt);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\subset-pan-byte-594-430(高通).bmp", Mt);
+    //低通滤波
+    Mat Ms = Mat::zeros(height, width, CV_8UC3);
+    for (int i = 1; i < height - 1; i++)
+    {
+        for (int j = 1; j < width - 1; j++)
+        {
+            //用平均法模板低通滤波
+            Ms.at<Vec3b>(i, j)[0] = (M.at<Vec3b>(i - 1, j - 1)[0] + M.at<Vec3b>(i - 1, j)[0] + M.at<Vec3b>(i - 1, j + 1)[0] + M.at<Vec3b>(i, j - 1)[0] + M.at<Vec3b>(i, j)[0] + M.at<Vec3b>(i - 1, j + 1)[0] + M.at<Vec3b>(i + 1, j - 1)[0] + M.at<Vec3b>(i + 1, j)[0] + M.at<Vec3b>(i + 1, j + 1)[0]) / 9;
+            Ms.at<Vec3b>(i, j)[1] = (M.at<Vec3b>(i - 1, j - 1)[1] + M.at<Vec3b>(i - 1, j)[1] + M.at<Vec3b>(i - 1, j + 1)[1] + M.at<Vec3b>(i, j - 1)[1] + M.at<Vec3b>(i, j)[1] + M.at<Vec3b>(i - 1, j + 1)[1] + M.at<Vec3b>(i + 1, j - 1)[1] + M.at<Vec3b>(i + 1, j)[1] + M.at<Vec3b>(i + 1, j + 1)[1]) / 9;
+            Ms.at<Vec3b>(i, j)[2] = (M.at<Vec3b>(i - 1, j - 1)[2] + M.at<Vec3b>(i - 1, j)[2] + M.at<Vec3b>(i - 1, j + 1)[2] + M.at<Vec3b>(i, j - 1)[2] + M.at<Vec3b>(i, j)[2] + M.at<Vec3b>(i - 1, j + 1)[2] + M.at<Vec3b>(i + 1, j - 1)[2] + M.at<Vec3b>(i + 1, j)[2] + M.at<Vec3b>(i + 1, j + 1)[2]) / 9;
+            //判断滤波后有无超过灰度阈值
+            if (Mt.at<Vec3b>(i, j)[0] > 255 || Mt.at<Vec3b>(i, j)[0] < 0)
+            {
+                Mt.at<Vec3b>(i, j)[0] = 0;
+            }
+            if (Mt.at<Vec3b>(i, j)[1] > 255 || Mt.at<Vec3b>(i, j)[1] < 0)
+            {
+                Mt.at<Vec3b>(i, j)[1] = 0;
+            }
+            if (Mt.at<Vec3b>(i, j)[2] > 255 || Mt.at<Vec3b>(i, j)[2] < 0)
+            {
+                Mt.at<Vec3b>(i, j)[2] = 0;
+            }
+        }
+    }
+    imshow("低通滤波", Ms);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\subset-pan-byte-594-430(低通).bmp", Ms);
+    waitKey(0);
+}
+void Transfer()//几何变换
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\landsat8\\subset-pan-byte-594-430.bmp";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open file error";
+    }
+    int rows = M.rows;
+    int cols = M.cols;
+      int x0, y0;//偏移量
+    cout << "分别输入x,y的偏移量（左正右负）";
+    cin >> x0 >> y0;
+    imshow("原始图像", M);
+    Mat Mt(rows, cols, CV_8UC3);
+    for (int i = 0; i <rows; i++)
+    {
+        int x = i + x0;//对行进行偏移
+        for (int j = 0; j < cols; j++)
+        {
+            int y = j + y0;//对列进行偏移
+            if (x>0&&x<rows&&y>0&&y<cols)//判断偏移后点是否在原矩阵中
+            {
+                Mt.at<Vec3b>(i,j)[0] = M.at<Vec3b>(x, y)[0];
+                Mt.at<Vec3b>(i,j)[1] = M.at<Vec3b>(x, y)[1];
+                Mt.at<Vec3b>(i,j)[2] = M.at<Vec3b>(x, y)[2];
+            }
+            else
+            {
+                Mt.at<Vec3b>(i, j)[0] = 0;
+                Mt.at<Vec3b>(i, j)[1] = 0;
+                Mt.at<Vec3b>(i, j)[2] = 0;
+            }
+        }
+    }
+    imshow("偏移后图像", Mt);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\偏移后图像.bmp", Mt);
+    waitKey();
+}
