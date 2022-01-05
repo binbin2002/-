@@ -1,0 +1,91 @@
+typedef struct
+{
+    int index;//下标
+    int freq;//频数
+}Peak;
+void Binary()
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\landsat8\\123.png";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open file error";
+    }
+    imshow("原始图像", M);
+    int channel = M.channels();
+    int rows = M.rows;
+    int cols = M.cols;
+    Mat impGray(rows, cols, CV_8UC1);
+    if (channel == 3)
+    {
+        impGray = ToGrey(M).clone();
+        imshow("灰度图像", impGray);
+    }
+    if (channel == 1)
+    {
+        impGray = M.clone();
+    }
+    imshow("灰度图像", impGray);
+    Peak peaks[256];//波峰
+    int histogram[256];//直方图
+    for (int i = 0; i < 255; i++) histogram[i] = 0;//初始直方图各个灰度值个数为0;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            histogram[impGray.at<uchar>(i, j)]++;//统计各个灰度出现的次数得到直方图
+        }
+    }
+    int size = 0;//波峰数
+    for (int i = 1; i < 254; i++)//统计波峰数量与频数
+    {
+        if (histogram[i] > histogram[i - 1] && histogram[i] > histogram[i + 1])
+        {
+            peaks[size].index = i;
+            peaks[size].freq = histogram[i];
+            size++;
+        }
+    }
+    //寻找最大的两个波峰
+    Peak Max = peaks[0], Snd = peaks[0];
+    for (int i = 0; i <size; i++)
+    {
+        if (peaks[i].freq > Max.freq)
+        {
+            Snd = Max;
+            Max = peaks[i];
+        }
+        else if (peaks[i].freq>Snd.freq)
+        {
+            Snd = peaks[i];
+        }
+    }
+    //找到波谷;
+    int q = min(Max.index, Snd.index);//双峰值较小下标
+    int p = max(Max.index, Snd.index);//双峰值较大下标
+    Peak k = Max;//波谷点
+    for (;q  < p; q++)
+    {
+        if (histogram[q]<k.freq)
+        {
+            k.freq = histogram[q];
+            k.index = q;
+        }
+    }
+    //二值化
+    Mat Mq(rows, cols, CV_8UC1);
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if (impGray.at<uchar>(i, j) < k.index)
+                Mq.at<uchar>(i, j) =0;
+            else
+                Mq.at<uchar>(i, j) =255;
+        }
+    }
+    imshow("二值化后图像", Mq);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\峰值法二值化.png", Mq);
+    waitKey();
+
+}
