@@ -1,0 +1,86 @@
+int main()
+{
+    cout << "0:个人必做题 1：个人选做题 100.结束使用"<<endl;
+    int i;
+    cin >> i;
+    while (i!=100)
+    {
+        if (i == 0)
+        {
+            cout << "1.灰度线性变换 2.图像局部处理" << endl;
+            int m;
+            cin >> m;
+            switch (m)
+            {
+            case 1:
+                GreyTransfer(); break;
+            case 2:
+            {
+                int s;
+                cout << "1.中值滤波 2.低通、高通滤波" << endl;
+                cin >> s;
+                switch (s)
+                {
+                case 1:
+                    MiddleTransfer(); break;
+                case 2:
+                    AreaTransfer(); break;
+                default:
+                    break;
+                }
+            }
+
+            default:
+                break;
+            }
+        }
+        else if (i == 1)
+        {
+            cout << "1.图像几何处理 2.图像二值化 3.色彩平衡" << endl;
+            int m;
+            cin >> m;
+            switch (m)
+            {
+            case 1:
+            {
+                cout << "1.平移 2.缩放 3.旋转";
+                int s;
+                cin >> s;
+                if (s == 1)
+                {
+                    Transfer();
+                }
+                else if (s == 2)
+                {
+                    BigorLittle();
+                }
+                else if (s == 3)
+                {
+                    Circle();
+                }
+            }; break;
+            case 2:
+            {
+                cout << "1.峰值法 2.判断分析法";
+                int s;
+                cin >> s;
+                if (s == 1)
+                {
+                    Binary();
+                }
+                else if (s == 2)
+                {
+                    BinaryReact();
+                }
+            }; break;
+            case 3:
+                ColorBalance(); break;
+            default:
+                break;
+            }
+        }
+        cout << "请重新输入i"<<endl;
+        cin >> i;
+    }
+    
+}
