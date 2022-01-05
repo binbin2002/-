@@ -1,0 +1,65 @@
+void Circle()
+{
+    char imageName[] = "C:\\Users\\24932\\Desktop\\ik_beijing_c.bmp";
+    Mat M = imread(imageName, IMREAD_COLOR);   // 读入图片 
+    if (M.empty())     // 判断文件是否正常打开  
+    {
+        cout << "open file error";
+    }
+    int rows = M.rows;
+    int cols = M.cols;
+    float angle;
+    cout << "输入转过的角度（顺时针为例）";
+    cin >> angle;
+    angle = angle /180* CV_PI;
+    float  x1, y1, x2, y2, x3, y3, x4, y4;
+    //计算原图像四个角的坐标(以图像中心为坐标系原点)
+    x1 = -(rows - 1) / 2;
+    y1 = (cols - 1) / 2;
+    x2 = (rows - 1) / 2;
+    y2 = (cols - 1) / 2;
+    x3 = -(rows - 1) / 2;
+    y3 = -(cols - 1) / 2;
+    x4 = (rows - 1) / 2;
+    y4 = -(cols - 1) / 2;
+    float X1, Y1, X2, Y2, X3, Y3, X4, Y4;
+    //以图像中心为原点旋转后四个角的坐标
+    X1 = cos(angle) * x1 + sin(angle) * y1;
+    Y1 = -sin(angle) * x1 + cos(angle) * y1;
+    X2 = cos(angle) * x2 + sin(angle) * y2;
+    Y2 = -sin(angle) * x2 + cos(angle) *y2;
+    X3 = cos(angle) * x3 + sin(angle) * y3;
+    Y3 = -sin(angle) * x3 + cos(angle) * y3;
+    X4 = cos(angle) * x4 + sin(angle) * y4;
+    Y4 = -sin(angle) * x4 + cos(angle) * y4;
+    int newrows = max(fabs(X4-X1), fabs(X3-X2)) + 0.5;//新边界范围
+    int newcols = max(fabs(Y4 - Y1), fabs(Y3-Y2)) + 0.5;//
+    float f1, f2;
+    f1 = -0.5 * (newcols- 1) * cos(angle) - 0.5 * (newrows - 1) * sin(angle) + 0.5 * (cols - 1);
+    f2 = 0.5 * (newcols - 1) * sin(angle) - 0.5 * (newrows - 1) * cos(angle) + 0.5 * (rows - 1);
+    Mat Ma(newrows, newcols, CV_8UC3);
+    for (int i = 0; i <newrows; i++)
+    {
+        for (int j = 0; j < newcols; j++)
+        {
+           int  x = -j * sin(angle) + i * cos(angle) + f2 + 0.5;
+           int  y = j * cos(angle) + i * sin(angle) + f1 + 0.5;
+           if (x > 0 && x < rows && y>0 && y <cols)//判断偏移后点是否在原矩阵中
+           {
+               Ma.at<Vec3b>(i,j)[0] = M.at<Vec3b>(x, y)[0];
+               Ma.at<Vec3b>(i,j)[1] = M.at<Vec3b>(x,y)[1];
+               Ma.at<Vec3b>(i,j)[2] = M.at<Vec3b>(x,y)[2];
+           }
+           else
+           {
+               Ma.at<Vec3b>(i, j)[0] = 0;
+               Ma.at<Vec3b>(i, j)[1] = 0;
+               Ma.at<Vec3b>(i, j)[2] = 0;
+           }
+        }
+       
+    }
+    imshow("旋转后图像", Ma);
+    imwrite("C:\\Users\\24932\\Desktop\\landsat8\\旋转后图像.bmp", Ma);
+    waitKey();
+}
